@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  urllogo   String
+  name      String
+  nit       String
+  phone     String
+  address   String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model NumberingRange {
+  id              Int      @id @default(autoincrement())
+  numbering_range Int
+  invoices        Invoice[]
+}
+
+model Invoice {
+  id                  Int             @id @default(autoincrement())
+  numbering_range_id  Int
+  reference_code      String
+  observation         String?
+  payment_form        String
+  payment_due_date    DateTime
+  payment_method_code String
+  billing_period      BillingPeriod?
+  customerId                 Int
+  customer                   Customer    @relation(fields: [customerId], references: [id])
+  items               Item[]
+  numberingRange      NumberingRange  @relation(fields: [numbering_range_id], references: [id])
+}
+
+model BillingPeriod {
+  id         Int      @id @default(autoincrement())
+  start_date DateTime
+  start_time String
+  end_date   DateTime
+  end_time   String
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
+  invoiceId  Int      @unique
+}
+
+model Customer {
+  id                          Int       @id @default(autoincrement())
+  identification             String
+  dv                         String
+  company                    String?
+  trade_name                 String?
+  names                      String
+  address                    String
+  email                      String
+  phone                      String
+  legal_organization_id      String
+  tribute_id                 String
+  identification_document_id String
+  municipality_id            String
+  invoices                   Invoice[]  // Cambiamos a una relación uno a muchos
+  createdAt                  DateTime   @default(now())
+  updatedAt                  DateTime   @updatedAt
+}
+
+model Item {
+  id                Int               @id @default(autoincrement())
+  code_reference    String
+  name              String
+  quantity          Int
+  discount_rate     Float
+  price             Float
+  tax_rate          String
+  unit_measure_id   Int
+  standard_code_id  Int
+  is_excluded       Int
+  tribute_id        Int
+  withholding_taxes WithholdingTax[]
+  invoice           Invoice           @relation(fields: [invoiceId], references: [id])
+  invoiceId         Int
+}
+
+model WithholdingTax {
+  id                  Int     @id @default(autoincrement())
+  code                String
+  withholding_tax_rate String
+  item                Item    @relation(fields: [itemId], references: [id])
+  itemId              Int
+}
